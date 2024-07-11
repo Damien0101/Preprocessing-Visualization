@@ -70,5 +70,3 @@ plt.ylabel("Proportion of houses with swimming pool")
 plt.title("Proportion of Houses with Swimming Pool per Province")
 plt.xticks(rotation=45, ha='right')
 plt.tight_layout()
-
-print(df[df["SurfaceOfPlot"] == 950774])
