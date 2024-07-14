@@ -10,6 +10,7 @@ numerical_df = final_df.select_dtypes(include=['number', 'bool'])
 correlation_matrix = numerical_df.corr()
 plt.figure(figsize=(12, 9))
 sns.heatmap(correlation_matrix, annot=True, cmap='coolwarm', fmt=".2f",annot_kws={"size": 10}, cbar_kws={"shrink": 0.75})
+plt.show()
 
 # correlation between construction year and PEB
 PEB_encoding = {'A': 1, 'B': 2, 'C': 3, 'D': 4, 'E': 5, 'F': 6, 'G': 7}
@@ -126,4 +127,3 @@ axes[1].set_ylabel('Price (€)', fontsize=14, fontweight='bold')
 axes[1].legend()
 
 plt.tight_layout()
-plt.show()

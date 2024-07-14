@@ -11,7 +11,7 @@ class DataCleaning:
         self.df = self.df[self.df[column].isin(values)]
     
     def merge_df(self, right_df, left_col, right_col):
-        self.df = self.df.merge(right_df, how="inner", left_on=left_col, right_on=right_col).drop_duplicates(subset="PropertyId")
+        self.df = self.df.merge(right_df, how="left", left_on=left_col, right_on=right_col).drop_duplicates(subset="PropertyId")
         
     def remove_outliers(self, column, lower_bound=None, upper_bound=None, filter_column=None, filter_value=None):
         if filter_column and filter_value:
@@ -73,10 +73,7 @@ class DataCleaning:
 
 data = pd.read_json("/home/siegfried2021/Bureau/BeCode_AI/Projets/ImmoEliza/Preprocessing-Visualization/data/final_dataset.json")
 df = pd.DataFrame(data)
-geo_data = pd.read_json('/home/siegfried2021/Bureau/BeCode_AI/Projets/ImmoEliza/Preprocessing-Visualization/data/georef-belgium-postal-codes.json')
-geo_data_df = pd.DataFrame(geo_data)
-geo_data_df = geo_data_df["postcode"]
-geo_data_csv = geo_data_df.to_csv('data/geo_dataset.csv')
+refnis_conv = pd.read_excel("/home/siegfried2021/Bureau/BeCode_AI/Projets/ImmoEliza/Preprocessing-Visualization/data/Conversion Postal code_Refnis code_va01012019.xlsx")
 
 dataclean = DataCleaning(df)
 
@@ -86,11 +83,14 @@ dataclean.drop_column("Country")
 
 dataclean.remove_none_values(["PostalCode", "Price", "PropertyId", "TypeOfSale", "TypeOfProperty"])
 
-dataclean.merge_df(geo_data_df, "PostalCode", "postcode")
-dataclean.drop_column("postcode")
+dataclean.merge_df(refnis_conv, "PostalCode", "Postal code")
+
+dataclean.drop_column("Postal code")
+dataclean.drop_column("Locality")
 
 dataclean.subset_dataframe("TypeOfSale", ['residential_sale', 'residential_monthly_rent'])
 
+dataclean.rename_values("FloodingZone", {"RECOGNIZED_N_CIRCUMSCRIBED_FLOOD_ZONE":"CIRCUMSCRIBED_FLOOD_ZONE"})
 dataclean.rename_values("PEB", {"A+":"A", "A++":"A", "A_A+": "A"})
 dataclean.rename_values("NumberOfFacades", {1:2})
 dataclean.rename_values("TypeOfProperty", {1:"House", 2:"Apartment"})
@@ -123,13 +123,19 @@ dataclean.remove_incoherent_values("BathroomCount", "RoomCount", 1)
 dataclean.remove_incoherent_values("ToiletCount", "RoomCount", 1)
 dataclean.remove_incoherent_values("ShowerCount", "RoomCount", 1)
 
-dataclean.convert_to_numbers("PEB", {'A': 1, 'B': 2, 'C': 3, 'D': 4, 'E': 5, 'F': 6, 'G': 7})
+dataclean.convert_to_numbers("PEB", {'G': 1, 'F': 2, 'E': 3, 'D': 4, 'C': 5, 'B': 6, 'A': 7})
 dataclean.convert_to_numbers("Kitchen", {'NOT_INSTALLED': 1, 'USA_UNINSTALLED': 2, 'INSTALLED': 3, 'USA_INSTALLED': 4, 'SEMI_EQUIPPED': 5, 'USA_SEMI_INSTALLED': 6, 'HYPER_EQUIPPED': 7, 'USA_HYPER_EQUIPPED': 8})
+dataclean.convert_to_numbers("FloodingZone", {'RECOGNIZED_FLOOD_ZONE': 1, 'POSSIBLE_FLOOD_ZONE': 2, 'CIRCUMSCRIBED_FLOOD_ZONE': 3, 'POSSIBLE_N_CIRCUMSCRIBED_FLOOD_ZONE': 4, 'RECOGNIZED_N_CIRCUMSCRIBED_WATERSIDE_FLOOD_ZONE': 5, 'CIRCUMSCRIBED_WATERSIDE_ZONE': 6, 'POSSIBLE_N_CIRCUMSCRIBED_WATERSIDE_ZONE': 7, 'NON_FLOOD_ZONE': 8})
 dataclean.convert_to_numbers("StateOfBuilding", {'TO_BE_DONE_UP': 1, 'TO_RESTORE': 2, 'TO_RENOVATE': 3, 'GOOD': 4, 'JUST_RENOVATED': 5, 'AS_NEW': 6})
-dataclean.convert_to_numbers("TypeOfProperty", {"House": 1, "Apartment": 2})
-dataclean.convert_to_numbers("TypeOfSale", {"residential_sale": 1, "residential_monthly_rent": 2})
-dataclean.convert_to_numbers("Region", {"Flanders": 1, "Wallonie": 2, "Brussels": 3})
+dataclean.convert_to_numbers("TypeOfProperty", {"Apartment": 1, "House": 2})
+dataclean.convert_to_numbers("TypeOfSale", {"residential_monthly_rent": 1, "residential_sale": 2})
+dataclean.convert_to_numbers("Region", {"Wallonie": 1, "Brussels": 2, "Flanders": 3})
 dataclean.convert_to_numbers("Province", {"Walloon Brabant": 1, "Hainaut": 2, "Namur": 3, "Liège": 4, "Luxembourg": 5, "Brussels": 6, "Flemish Brabant": 7, "West Flanders": 8, "East Flanders": 9, "Antwerp": 10, "Limburg": 11})
+dataclean.convert_to_numbers("District", {'Brussels': 1,'Antwerp': 2,'Liège': 3,'Brugge': 4,'Halle-Vilvoorde': 5,'Gent': 6,'Turnhout': 7,'Nivelles': 8,'Leuven': 9,'Oostend': 10,'Mechelen': 11,'Aalst': 12,'Kortrijk': 13,'Namur': 14,'Hasselt': 15,'Veurne': 16,'Sint-Niklaas': 17,'Charleroi': 18,'Mons': 19,'Verviers': 20,'Dendermonde': 21,'Roeselare': 22,'Tournai': 23,'Soignies': 24,'Oudenaarde': 25,'Tielt': 26,'Maaseik': 27,'Tongeren': 28,'Thuin': 29,'Mouscron': 30,'Eeklo': 31,'Dinant': 32,'Arlon': 33,'Ath': 34,'Huy': 35,'Virton': 36,'Waremme': 37,'Marche-en-Famenne': 38,'Diksmuide': 39,'Neufchâteau': 40,'Ieper': 41,'Bastogne': 42,'Philippeville': 43})
+
+list_of_cities = [code for code in dataclean.df["Refnis code"].unique()]
+dict_cities = {list_of_cities[i]: i+1 for i in range(0, len(list_of_cities))}
+dataclean.convert_to_numbers("Refnis code", dict_cities)
 
 final_df = dataclean.df
-final_csv = final_df.to_csv('data/final_set.csv')
+final_csv = final_df.to_csv('data/final_set.csv', index=False)
