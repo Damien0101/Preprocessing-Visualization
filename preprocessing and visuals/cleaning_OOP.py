@@ -15,7 +15,7 @@ class DataCleaning:
         
     def remove_outliers(self, column, lower_bound=None, upper_bound=None, filter_column=None, filter_value=None):
         if filter_column and filter_value:
-            filtered_df = self.df[(self.df[filter_column] == filter_value)]
+            filtered_df = self.df[self.df[filter_column] == filter_value]
             non_null_values = filtered_df[column].notna()
             if lower_bound is not None:
                 non_null_values &= (filtered_df[column] >= lower_bound)
@@ -75,12 +75,8 @@ data = pd.read_json("/home/siegfried2021/Bureau/BeCode_AI/Projets/ImmoEliza/Prep
 df = pd.DataFrame(data)
 geo_data = pd.read_json('/home/siegfried2021/Bureau/BeCode_AI/Projets/ImmoEliza/Preprocessing-Visualization/data/georef-belgium-postal-codes.json')
 geo_data_df = pd.DataFrame(geo_data)
-geo_data_df_short = geo_data_df["postcode"]
-geo_data_coord = geo_data_df["geo_point_2d"].apply(pd.Series)
-geo_data_df_short = pd.concat([geo_data_df_short.drop(columns=['geo_point_2d']), geo_data_coord], axis=1)
-
+geo_data_df = geo_data_df["postcode"]
 geo_data_csv = geo_data_df.to_csv('data/geo_dataset.csv')
-geo_data_short_csv = geo_data_df_short.to_csv('data/geo_short_dataset.csv')
 
 dataclean = DataCleaning(df)
 
@@ -90,7 +86,7 @@ dataclean.drop_column("Country")
 
 dataclean.remove_none_values(["PostalCode", "Price", "PropertyId", "TypeOfSale", "TypeOfProperty"])
 
-dataclean.merge_df(geo_data_df_short, "PostalCode", "postcode")
+dataclean.merge_df(geo_data_df, "PostalCode", "postcode")
 dataclean.drop_column("postcode")
 
 dataclean.subset_dataframe("TypeOfSale", ['residential_sale', 'residential_monthly_rent'])
@@ -111,7 +107,6 @@ dataclean.modify_other_columns("Garden", "GardenArea", ">", 0, 1)
 dataclean.remove_outliers("Price", 10000, 25000000, "TypeOfSale", "residential_sale")
 dataclean.remove_outliers("Price", 1000, 50000, "TypeOfSale", "residential_monthly_rent")
 dataclean.remove_outliers("ConstructionYear", 1500, 2025)
-
 dataclean.remove_outliers("LivingArea", 5, 5000)
 dataclean.remove_outliers("ShowerCount", 0, 40)
 dataclean.remove_outliers("ToiletCount", 0, 40)

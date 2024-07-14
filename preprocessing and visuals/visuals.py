@@ -15,13 +15,22 @@ sns.heatmap(correlation_matrix, annot=True, cmap='coolwarm', fmt=".2f",annot_kws
 PEB_encoding = {'A': 1, 'B': 2, 'C': 3, 'D': 4, 'E': 5, 'F': 6, 'G': 7}
 PEB_values = ["A", "B", "C", "D", "E", "F", "G"]
 final_df["PEB_numerical"] = final_df["PEB"].map(PEB_encoding)
-correlation_PEB_Year = final_df[["PEB_numerical", "ConstructionYear"]].corr()
-# box plot to visualize the relationship between PEB and construction year
-plt.figure(figsize=(10, 6))
-sns.boxplot(data=final_df, x="PEB", y="ConstructionYear", order=PEB_values)
-plt.xlabel("PEB Score")
-plt.ylabel("Construction Year")
-plt.title("Relationship between properties construction year and energy performance")
+filtered_df = final_df[final_df['ConstructionYear'] >= 1800]
+correlation_PEB_Year = filtered_df[["PEB_numerical", "ConstructionYear"]].corr()
+
+# boxplot displaying relationship between year and PEB
+sns.set_style(style="whitegrid")
+palette = "muted"
+plt.figure(figsize=(12, 8))
+sns.boxplot(data=filtered_df, x="PEB", y="ConstructionYear", order=PEB_values, hue="PEB", palette=palette, dodge=False)
+plt.xlabel("PEB Score", fontsize=15, fontweight='bold')
+plt.ylabel("Construction Year", fontsize=15, fontweight='bold')
+plt.title("Relationship Between Properties Construction Year and Energy Performance", fontsize=18, fontweight='bold')
+plt.grid(True, which='both', linestyle='--', linewidth=0.7)
+plt.xticks(rotation=45, fontsize=14, fontweight="bold")
+plt.yticks(fontsize=14, fontweight="bold")
+plt.gca().set_facecolor('#f7f7f7')
+plt.tight_layout()
 
 # relationship between house price for sale and presence/absence of a swimming pool
 final_df_residential = final_df[final_df['TypeOfSale'] == 'residential_sale']
@@ -58,12 +67,8 @@ plt.title("Mean price of properties per province by property type")
 plt.xticks(rotation=45)
 
 # house price based on plot area versus living area
-living_area_lower = final_df_house_for_sale['LivingArea'].quantile(0.025)
-living_area_upper = final_df_house_for_sale['LivingArea'].quantile(0.975)
-surface_of_plot_lower = 50
-surface_of_plot_upper = 5000
-price_lower_bound = 25000
-price_upper_bound = 1250000
+final_df_house = final_df[final_df["TypeOfProperty"] == "House"]
+final_df_house_for_sale = final_df_house[final_df_house["TypeOfSale"] == "residential_sale"]
 
 fig, axes = plt.subplots(1, 2, figsize=(14, 7))
 
@@ -72,16 +77,13 @@ sns.regplot(x='LivingArea', y='Price', data=final_df_house_for_sale, scatter=Fal
 axes[0].set_title('Living Area vs Price')
 axes[0].set_xlabel('Living Area')
 axes[0].set_ylabel('Price')
-axes[0].set_xlim(living_area_lower, living_area_upper)
-axes[0].set_ylim(price_lower_bound, price_upper_bound)
 
 sns.scatterplot(x='SurfaceOfPlot', y='Price', data=final_df_house_for_sale, color='steelblue', ax=axes[1])
 sns.regplot(x='SurfaceOfPlot', y='Price', data=final_df_house_for_sale, scatter=False, color='steelblue', ax=axes[1])
 axes[1].set_title('Surface of Plot vs Price')
 axes[1].set_xlabel('Surface of Plot')
 axes[1].set_ylabel('Price')
-axes[1].set_xlim(surface_of_plot_lower, surface_of_plot_upper)
-axes[1].set_ylim(price_lower_bound, price_upper_bound)
+
 axes[1].set_xscale('log')
 
 fig.suptitle('Comparison of Surface and Living Areas as Predictors on Price with Regression Lines', fontsize=16)
@@ -101,26 +103,26 @@ plt.legend(title='Number of Facades', bbox_to_anchor=(1.05, 1), loc='upper left'
 plt.tight_layout()
 
 # scatter plot of price based on surface of the plot/living area, discriminating between Wallonia and Flanders
-final_df_fw_house_for_sale = final_df_house_for_sale[final_df['Region'].isin(['Flanders', 'Wallonie'])]
+final_df_fw_house_for_sale = final_df_house_for_sale[final_df_house_for_sale['Region'].isin(['Flanders', 'Wallonie'])]
+
 sns.set_style(style="whitegrid")
 palette = {'Flanders': 'red', 'Wallonie': 'green'}
-
 fig, axes = plt.subplots(1, 2, figsize=(15, 7))
 
 sns.scatterplot(ax=axes[0], x='SurfaceOfPlot', y='Price', data=final_df_fw_house_for_sale, hue='Region', palette=palette)
 sns.regplot(ax=axes[0], x='SurfaceOfPlot', y='Price', data=final_df_fw_house_for_sale[final_df_fw_house_for_sale['Region'] == 'Flanders'], scatter=False, color='blue', line_kws={"label":"Flanders"})
 sns.regplot(ax=axes[0], x='SurfaceOfPlot', y='Price', data=final_df_fw_house_for_sale[final_df_fw_house_for_sale['Region'] == 'Wallonie'], scatter=False, color='green', line_kws={"label":"Wallonie"})
-axes[0].set_title('House Price vs. Plot Surface')
-axes[0].set_xlabel('Plot Surface')
-axes[0].set_ylabel('Price')
+axes[0].set_title('House Price vs. Plot Surface', fontsize=16, fontweight='bold')
+axes[0].set_xlabel('Plot Surface (m²)', fontsize=14, fontweight='bold')
+axes[0].set_ylabel('Price (€)', fontsize=14, fontweight='bold')
 axes[0].legend()
 
 sns.scatterplot(ax=axes[1], x='LivingArea', y='Price', data=final_df_fw_house_for_sale, hue='Region', palette=palette)
 sns.regplot(ax=axes[1], x='LivingArea', y='Price', data=final_df_fw_house_for_sale[final_df_fw_house_for_sale['Region'] == 'Flanders'], scatter=False, color='blue', line_kws={"label":"Flanders"})
 sns.regplot(ax=axes[1], x='LivingArea', y='Price', data=final_df_fw_house_for_sale[final_df_fw_house_for_sale['Region'] == 'Wallonie'], scatter=False, color='green', line_kws={"label":"Wallonie"})
-axes[1].set_title('House Price vs. Living Area')
-axes[1].set_xlabel('Living Area')
-axes[1].set_ylabel('Price')
+axes[1].set_title('House Price vs. Living Area', fontsize=16, fontweight='bold')
+axes[1].set_xlabel('Living Area (m²)', fontsize=14, fontweight='bold')
+axes[1].set_ylabel('Price (€)', fontsize=14, fontweight='bold')
 axes[1].legend()
 
 plt.tight_layout()
